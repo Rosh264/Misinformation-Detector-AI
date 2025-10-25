@@ -1,0 +1,22 @@
+{
+  "manifest_version": 2,
+  "name": "Misinformation Detector",
+  "version": "0.1",
+  "description": "Flags potential misinformation in news headlines using hashing and AI.",
+  "icons": {
+    "48": "icons/shield-48.png" 
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content.js"
+      ]
+    }
+  ],
+  "permissions": [
+    "http://127.0.0.1:8000/*" 
+  ]
+}

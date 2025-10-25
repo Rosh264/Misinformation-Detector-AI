@@ -1,0 +1,7 @@
+# Python
+__pycache__/
+*.pyc
+
+# Virtual Environment
+venv/
+/Users/raji/Desktop/Misinfo_Project/server/venv
