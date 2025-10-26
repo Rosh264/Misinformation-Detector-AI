@@ -12,7 +12,7 @@ function handleBackgroundMessage(request, sender, sendResponse) {
                 request.apiUrl,
                 request.icons,
                 request.mgIcon,
-                request.mgTitleImg // Receive the URL for the title image
+                request.mgTitleImg // Receive title image URL
             );
         }, 50);
         sendResponse({ success: true });
@@ -128,7 +128,7 @@ function updatePanelContent(headline, icons, mgIcon, mgTitleImg, status = 'check
     }
     if (reasonText) reasonText.textContent = reason;
 
-    // Display probabilities
+    // --- Display probabilities ---
     if (safeStatus !== 'checking' && probabilities && typeof probabilities === 'object' && !probabilities.error) {
         const probMisleading = probabilities.misleading || 0;
         const probVerified = probabilities.verified || 0;
@@ -157,7 +157,6 @@ function updatePanelContent(headline, icons, mgIcon, mgTitleImg, status = 'check
 
 // Closes and removes the panel
 function closePanel() {
-    // ... (keep the existing closePanel function) ...
     const panelContainer = document.getElementById(PANEL_CONTAINER_ID);
     if (panelContainer) {
         const panel = panelContainer.querySelector('.mg-panel');
@@ -177,7 +176,6 @@ function closePanel() {
 
 // --- API Call ---
 async function fetchHeadlineResult(headline, apiUrl, icons) {
-    // ... (keep the existing fetchHeadlineResult function) ...
     console.log("MisInfo Guard (Inject): Fetching result from API:", apiUrl);
     try {
         const response = await fetch(apiUrl, {
@@ -211,14 +209,15 @@ async function fetchHeadlineResult(headline, apiUrl, icons) {
         if (data.results && data.results.length > 0) {
             const result = data.results[0];
             // Update panel content with results
+            // Pass null for icons/mgIcon/mgTitleImg as they shouldn't be updated again
             updatePanelContent(headline, icons, null, null, result.status, result.reason, result.probabilities);
         } else {
             throw new Error("Received no results or unclear data format from server.");
         }
 
-    } catch (error) {
+    } catch (error) { // Handle network or API errors
         console.error("MisInfo Guard (Inject): Error fetching or processing API result:", error);
+        // Update panel content with error status
         updatePanelContent(headline, icons, null, null, 'error', error.message, null);
     }
 }
-
