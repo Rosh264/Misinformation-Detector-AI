@@ -1,30 +1,29 @@
-console.log("MisInfo Guard (Inject): Script loaded (v0.5.2)."); // Version bump for this fix
+console.log("MisInfo Guard (Inject): Script loaded (v1.0.1 - Title Fix)."); // Version bump for this fix
 
-const PANEL_ID = 'misinfo-guard-panel-container';
+const PANEL_CONTAINER_ID = 'misinfo-guard-panel-container';
 
 // --- Message Handler: Entry point from background script ---
-function messageHandler(request, sender, sendResponse) {
+function handleBackgroundMessage(request, sender, sendResponse) {
     console.log("MisInfo Guard (Inject): Message received by handler", request);
     if (request.type === "SHOW_MISINFO_PANEL") {
-        // Use a short timeout to ensure DOM is ready after injection
         setTimeout(() => {
             createOrUpdatePanel(
                 request.headline,
                 request.apiUrl,
                 request.icons,
                 request.mgIcon,
-                request.mgTitleImg // Receive title image URL
+                request.mgTitleImg // Receive the URL for the title image
             );
         }, 50);
-        sendResponse({ success: true }); // Acknowledge message
-        return true; // Keep message channel open briefly if needed
+        sendResponse({ success: true });
+        return true;
     }
-    return false; // Indicate message not handled
+    return false;
 }
 
 // Add listener only once
-if (!browser.runtime.onMessage.hasListener(messageHandler)) {
-    browser.runtime.onMessage.addListener(messageHandler);
+if (!browser.runtime.onMessage.hasListener(handleBackgroundMessage)) {
+    browser.runtime.onMessage.addListener(handleBackgroundMessage);
     console.log("MisInfo Guard (Inject): Message listener added.");
 }
 
@@ -32,15 +31,22 @@ if (!browser.runtime.onMessage.hasListener(messageHandler)) {
 // --- Panel Creation and Management ---
 function createOrUpdatePanel(headline, apiUrl, icons, mgIcon, mgTitleImg) {
     console.log("MisInfo Guard (Inject): Creating/Updating Panel for:", headline.substring(0, 30) + "...");
-    let panelContainer = document.getElementById(PANEL_ID);
-    if (panelContainer) panelContainer.remove(); // Remove old panel
 
-    panelContainer = document.createElement('div');
-    panelContainer.id = PANEL_ID;
+    let existingPanelContainer = document.getElementById(PANEL_CONTAINER_ID);
+    if (existingPanelContainer) {
+        existingPanelContainer.remove();
+    }
 
-    // Load HTML template
+    const panelContainer = document.createElement('div');
+    panelContainer.id = PANEL_CONTAINER_ID;
+
     fetch(browser.runtime.getURL('result_panel.html'))
-        .then(response => response.ok ? response.text() : Promise.reject(`Failed to load panel HTML: ${response.statusText}`))
+        .then(response => {
+            if (!response.ok) {
+                return Promise.reject(`Failed to load panel HTML: ${response.status} ${response.statusText}`);
+            }
+            return response.text();
+        })
         .then(html => {
             panelContainer.innerHTML = html;
             document.body.appendChild(panelContainer);
@@ -48,65 +54,72 @@ function createOrUpdatePanel(headline, apiUrl, icons, mgIcon, mgTitleImg) {
 
             const panel = panelContainer.querySelector('.mg-panel');
             const closeBtn = panelContainer.querySelector('#mg-close-btn');
-            if (closeBtn) closeBtn.addEventListener('click', closePanel);
+            const titleImageEl = panelContainer.querySelector('#mg-title-image'); // Get title image element
 
-            // Set initial loading state and images, including the title image
-            updatePanelContent(headline, icons, mgIcon, mgTitleImg, 'checking', 'Analyzing selected text...', null);
-            requestAnimationFrame(() => { if (panel) panel.classList.add('mg-show'); });
+            if (closeBtn) {
+                closeBtn.addEventListener('click', closePanel);
+            } else {
+                console.warn("MisInfo Guard (Inject): Close button not found.");
+            }
 
-            // Call API to get real results
+            // *** FIX: Set title image source HERE when creating panel ***
+            if (titleImageEl && mgTitleImg) {
+                titleImageEl.src = mgTitleImg;
+                titleImageEl.alt = "MisInfo Guard Title";
+                titleImageEl.style.display = 'block'; // Ensure visible
+                console.log("MisInfo Guard (Inject): Title image src set.");
+            } else if (!titleImageEl) {
+                 console.warn("MisInfo Guard (Inject): Title image element (#mg-title-image) not found in HTML.");
+            }
+            // *** END FIX ***
+
+            // Set initial loading state
+            updatePanelContent(headline, icons, mgIcon, null, 'checking', 'Analyzing selected text...', null); // Pass null for title img now
+
+            requestAnimationFrame(() => {
+                if (panel) panel.classList.add('mg-show');
+            });
+
             fetchHeadlineResult(headline, apiUrl, icons);
         })
         .catch(error => {
             console.error('MisInfo Guard (Inject): Error loading or setting up panel:', error);
-             // Send fallback notification message to background script
              try {
-                browser.runtime.sendMessage({
-                    type: "FALLBACK_NOTIFICATION",
-                    title: "Panel Load Error",
-                    message: `Could not load UI: ${error.message || error}`
-                });
+                browser.runtime.sendMessage({ type: "FALLBACK_NOTIFICATION", title: "Panel Load Error", message: `Could not load UI: ${error.message || error}` });
              } catch (e) { console.error("MisInfo Guard (Inject): Failed to send fallback message:", e); }
         });
 }
 
-// Updates panel content (initially loading, then with results)
+// Updates panel content (excluding title image now)
 function updatePanelContent(headline, icons, mgIcon, mgTitleImg, status = 'checking', reason = 'Analyzing selected text...', probabilities = null) {
-    const panelContainer = document.getElementById(PANEL_ID);
+    const panelContainer = document.getElementById(PANEL_CONTAINER_ID);
     if (!panelContainer) return;
 
     // Get references
     const headerIcon = panelContainer.querySelector('#mg-header-icon');
-    const titleImage = panelContainer.querySelector('#mg-title-image');
+    // const titleImage = panelContainer.querySelector('#mg-title-image'); // No longer needed here
     const statusIcon = panelContainer.querySelector('#mg-status-icon');
     const statusText = panelContainer.querySelector('#mg-status-text');
     const reasonText = panelContainer.querySelector('#mg-reason');
     const headlineText = panelContainer.querySelector('#mg-selected-headline');
     const predictionDetail = panelContainer.querySelector('#mg-prediction-detail');
 
-    // Basic check to prevent errors if elements aren't found
-    if (!headerIcon || !titleImage || !statusIcon || !statusText || !reasonText || !headlineText || !predictionDetail) {
-        console.error("MisInfo Guard (Inject): One or more critical panel elements not found! Check HTML structure.");
-        closePanel(); // Close broken panel
-        return;
+    if (!headerIcon || /* !titleImage || */ !statusIcon || !statusText || !reasonText || !headlineText || !predictionDetail) {
+        console.error("MisInfo Guard (Inject): One or more critical panel elements not found!");
+        closePanel(); return;
     }
 
     const safeStatus = status ? status.toLowerCase() : 'error';
 
-    // Set general info & images (only if provided - prevents overwriting on subsequent updates)
+    // Set header icon only if provided (on initial load)
     if (mgIcon) {
       headerIcon.src = mgIcon;
       headerIcon.alt = "MisInfo Guard Icon";
     }
-    if (mgTitleImg) {
-      titleImage.src = mgTitleImg; // <-- Sets the title image src
-      titleImage.alt = "MisInfo Guard Title";
-      titleImage.style.display = 'block'; // Ensure it's visible
-    }
+    // Title image is set only once during creation now
 
     if (headlineText) headlineText.textContent = headline;
 
-    // Set status specific info
     if (statusIcon) statusIcon.src = icons[safeStatus] || icons.error;
     if (statusIcon) statusIcon.alt = `${safeStatus} status icon`;
     if (statusText) {
@@ -115,14 +128,12 @@ function updatePanelContent(headline, icons, mgIcon, mgTitleImg, status = 'check
     }
     if (reasonText) reasonText.textContent = reason;
 
-    // --- Display probabilities ---
+    // Display probabilities
     if (safeStatus !== 'checking' && probabilities && typeof probabilities === 'object' && !probabilities.error) {
-        // Ensure keys match what the backend sends (e.g., 'misleading', 'verified')
         const probMisleading = probabilities.misleading || 0;
         const probVerified = probabilities.verified || 0;
         let totalProb = probMisleading + probVerified;
-        // Avoid division by zero if both probabilities are 0
-        if (totalProb === 0) totalProb = 1;
+        if (totalProb <= 0) totalProb = 1;
 
         const fakePerc = ((probMisleading / totalProb) * 100).toFixed(1);
         const realPerc = ((probVerified / totalProb) * 100).toFixed(1);
@@ -139,35 +150,35 @@ function updatePanelContent(headline, icons, mgIcon, mgTitleImg, status = 'check
         `;
     } else if (safeStatus === 'checking') {
          predictionDetail.innerHTML = `<p class="mg-loading-text">Calculating confidence...</p>`;
-    }
-     else { // Error or no probabilities available
+    } else {
         predictionDetail.innerHTML = `<p class="mg-info-text">Confidence scores not available.</p>`;
     }
 }
 
 // Closes and removes the panel
 function closePanel() {
-    const panelContainer = document.getElementById(PANEL_ID);
+    // ... (keep the existing closePanel function) ...
+    const panelContainer = document.getElementById(PANEL_CONTAINER_ID);
     if (panelContainer) {
         const panel = panelContainer.querySelector('.mg-panel');
         if (panel) {
             panel.classList.remove('mg-show');
-            // Remove after transition finishes
             panel.addEventListener('transitionend', () => {
                  if (document.body.contains(panelContainer)) { panelContainer.remove(); }
             }, { once: true });
-             // Fallback removal timer in case transition event doesn't fire
-             setTimeout(() => { if (document.body.contains(panelContainer)) { panelContainer.remove(); } }, 350); // Slightly longer than transition
+             setTimeout(() => { if (document.body.contains(panelContainer)) { panelContainer.remove(); } }, 350);
         } else {
-             panelContainer.remove(); // If panel element not found, just remove container
+             panelContainer.remove();
         }
         console.log("MisInfo Guard (Inject): Panel closed.");
     }
 }
 
+
 // --- API Call ---
 async function fetchHeadlineResult(headline, apiUrl, icons) {
-    console.log("MisInfo Guard (Inject): Fetching result from API...");
+    // ... (keep the existing fetchHeadlineResult function) ...
+    console.log("MisInfo Guard (Inject): Fetching result from API:", apiUrl);
     try {
         const response = await fetch(apiUrl, {
             method: 'POST',
@@ -175,42 +186,38 @@ async function fetchHeadlineResult(headline, apiUrl, icons) {
             body: JSON.stringify({ headlines: [headline] })
         });
 
-        // Check if panel still exists and is shown before processing response
-        const panelContainer = document.getElementById(PANEL_ID);
+        const panelContainer = document.getElementById(PANEL_CONTAINER_ID);
         const panel = panelContainer?.querySelector('.mg-panel.mg-show');
         if (!panel) {
-             console.log("MisInfo Guard (Inject): Panel closed before API response received.");
-             return; // Stop processing if panel was closed
+             console.log("MisInfo Guard (Inject): Panel was closed before API response received.");
+             return;
         }
 
         if (!response.ok) {
             let errorMsg = `API Error ${response.status}`;
             try {
-                // Try to get more detail from JSON error response
                 const errorJson = await response.json();
                 errorMsg += `: ${errorJson.detail || JSON.stringify(errorJson)}`;
             } catch (e) {
-                // Fallback if response is not JSON
-                errorMsg += `: ${await response.text() || 'Unknown server error.'}`;
+                const textError = await response.text();
+                errorMsg += `: ${textError || 'Unknown server error.'}`;
             }
             throw new Error(errorMsg);
         }
 
         const data = await response.json();
-        console.log("MisInfo Guard (Inject): Received results:", data);
+        console.log("MisInfo Guard (Inject): Received results from API:", data);
 
         if (data.results && data.results.length > 0) {
             const result = data.results[0];
-            // Call updatePanelContent again, but only pass needed args to update results
-            // Pass headline again to ensure it's displayed correctly if update is very fast
+            // Update panel content with results
             updatePanelContent(headline, icons, null, null, result.status, result.reason, result.probabilities);
         } else {
-            throw new Error("Received no results or unclear data from server.");
+            throw new Error("Received no results or unclear data format from server.");
         }
 
-    } catch (error) { // Handle network errors (fetch failed) or API errors (response not ok)
-        console.error("MisInfo Guard (Inject): Error fetching result:", error);
-        // Call updatePanelContent again to display error status
+    } catch (error) {
+        console.error("MisInfo Guard (Inject): Error fetching or processing API result:", error);
         updatePanelContent(headline, icons, null, null, 'error', error.message, null);
     }
 }
