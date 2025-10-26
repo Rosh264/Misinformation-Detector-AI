@@ -1,8 +1,10 @@
-<!-- This content is injected by inject_panel.js --><!-- It assumes result_panel.css is loaded separately --><div class="mg-panel">
+<!-- This content is injected by inject_panel.js -->
+<div class="mg-panel">
   <div class="mg-header">
     <img src="" id="mg-header-icon" alt="MisInfo Guard Icon" class="mg-icon-header">
 
-    <!-- THIS IS YOUR TITLE IMAGE. It will directly act as the title. --><img src="" id="mg-title-image" alt="MisInfo Guard" class="mg-title-image">
+    <!-- Title image -->
+    <img src="" id="mg-title-image" alt="MisInfo Guard Title" class="mg-title-image">
 
     <button id="mg-close-btn" class="mg-close-btn" title="Close Panel">&times;</button>
   </div>
@@ -12,13 +14,16 @@
       <span id="mg-status-text" class="mg-status-checking">Checking...</span>
     </div>
 
-    <!-- Prediction Detail Section (Percentages) --><div id="mg-prediction-detail" class="mg-prediction-detail">
+    <!-- Prediction Percentages -->
+    <div id="mg-prediction-detail" class="mg-prediction-detail">
       Calculating confidence...
     </div>
 
-    <!-- Reason from API --><p id="mg-reason" class="mg-reason">Analyzing selected text...</p>
+    <!-- Reason from API -->
+    <p id="mg-reason" class="mg-reason">Analyzing selected text...</p>
 
-    <!-- Selected Text Display --><div class="mg-headline-container">
+    <!-- Selected Text Display -->
+    <div class="mg-headline-container">
       <strong class="mg-selected-text-label">Selected Text:</strong>
       <p id="mg-selected-headline" class="mg-selected-headline"></p>
     </div>
