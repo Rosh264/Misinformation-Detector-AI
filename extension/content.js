@@ -1,12 +1,13 @@
 console.log("Misinfo Detector v0.2 Loaded");
 
-const API_URL = "http://localhost/check-headlines"; // Your local backend
+const API_URL = "https://misinfo-detector.onrender.com/check-headlines";
 let processedElements = new Set(); // Keep track of elements we've already checked
 
 // --- Core Logic ---
 
 // Function to find headlines based on the current site
 function findHeadlinesOnPage() {
+    console.log("Misinfo Detector: Entered findHeadlinesOnPage function");
     const headlines = [];
     let elementsToCheck = [];
 
@@ -214,6 +215,7 @@ observer.observe(document.body, {
 });
 
 // --- Initial Scan ---
+console.log("Misinfo Detector: Setting up initial scan...");
 // Run an initial scan after a short delay to allow page rendering
 setTimeout(() => {
     console.log("Misinfo Detector: Running initial scan...");
