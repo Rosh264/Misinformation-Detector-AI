@@ -73,8 +73,8 @@
 
 /* Small icon next to title - MADE BIGGER */
 #misinfo-guard-panel-container .mg-icon-header {
-  width: 50px;   /* Increased size */
-  height: 50px;  /* Increased size */
+  width: 60px;   /* Increased size */
+  height: 60px;  /* Increased size */
   margin-right: 12px; /* Increased space */
   vertical-align: middle;
   flex-shrink: 0; /* Prevent icon from shrinking */

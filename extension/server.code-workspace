@@ -5,7 +5,12 @@
 		},
 		{
 			"path": "."
+		},
+		{
+			"path": "../WebApp"
 		}
 	],
-	"settings": {}
+	"settings": {
+		"liveServer.settings.multiRootWorkspaceName": "WebApp"
+	}
 }
