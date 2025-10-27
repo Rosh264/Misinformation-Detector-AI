@@ -1,0 +1,1784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MisInfo Guard - Fake News Detection</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary-color: #FF8C00;
+            --secondary-color: #1a73e8;
+            --accent-color: #34a853;
+            --warning-color: #f9ab00;
+            --danger-color: #ea4335;
+            --light-color: #f8f9fa;
+            --dark-color: #202124;
+            --gray-color: #5f6368;
+            --border-radius: 8px;
+            --box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f0f5ff 0%, #e6f0ff 50%, #d9e8ff 100%);
+            color: var(--dark-color);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header Styles */
+        header {
+            background-color: white;
+            color: var(--dark-color);
+            padding: 0.3rem 0;
+            box-shadow: var(--box-shadow);
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: var(--transition);
+        }
+
+        .logo:hover {
+            transform: translateY(-2px);
+        }
+
+        .logo img {
+            transition: var(--transition);
+        }
+
+        .logo:hover img {
+            transform: scale(1.05);
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 35px;
+        }
+
+        nav a {
+            color: var(--dark-color);
+            text-decoration: none;
+            font-weight: 700;
+            padding: 5px 0;
+            position: relative;
+            transition: var(--transition);
+        }
+
+        nav a::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: 0;
+            left: 0;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            transition: var(--transition);
+        }
+
+        nav a:hover::after,
+        nav a.active::after {
+            width: 100%;
+        }
+
+        nav a:hover {
+            color: var(--primary-color);
+        }
+
+        nav a.active {
+            color: var(--primary-color);
+        }
+
+        /* Hero Section */
+
+        /* Landing Text Styles */
+        .landing-text {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 0 1rem;
+        }
+
+        .landing-text h1 {
+            font-size: 5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            line-height: 3.1;
+            opacity: 0;
+            transform: translateY(-50px);
+            animation: fadeInDown 1.5s ease forwards;
+        }
+
+        @keyframes fadeInDown {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: inline-block;
+        }
+
+        .landing-text p {
+            font-size: 1.5rem;
+            color: var(--dark-color);
+            font-weight: 500;
+        }
+
+        .highlight {
+            background: linear-gradient(120deg, rgba(255, 140, 0, 0.2) 0%, rgba(255, 140, 0, 0.2) 100%);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            position: relative;
+        }
+
+        .highlight::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            border-radius: 2px;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .landing-text h1 {
+                font-size: 2.5rem;
+            }
+            
+            .landing-text p {
+                font-size: 1.2rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .landing-text h1 {
+                font-size: 2rem;
+            }
+            
+            .landing-text p {
+                font-size: 1rem;
+            }
+        }
+
+        .hero {
+            padding: 1rem 15 1rem; /* Increased top padding */
+            text-align: center;
+            margin-bottom: 3rem;
+            transition: var(--transition);
+            opacity: 0;
+            transform: translateY(40px);
+            animation: fadeInUp 1s ease forwards;
+            
+        }
+        .page-section .hero h2 {
+            margin-top: 2rem; /* ensures heading sits visibly below navbar */
+        }
+
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hero h2 {
+            font-size: 2.5rem;
+            margin-top: -12rem;
+            margin-bottom: 1rem;
+            color: var(--dark-color);
+            transition: var(--transition);
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            color: var(--gray-color);
+            max-width: 700px;
+            margin: 0 auto 2rem;
+            animation: fadeInUp 0.8s ease 0.3s forwards;
+
+        }
+
+        /* Main Content */
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Checker Card */
+        .checker-card {
+            background-color: rgba(255, 255, 255, 0.85);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            transition: var(--transition);
+            opacity: 0;
+            transform: translateY(20px);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .checker-card.animate {
+            animation: fadeInUp 0.8s ease forwards;
+        }
+
+        .checker-card:hover {
+            transform: translateY(-5px) scale(1.01);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+            background-color: rgba(255, 255, 255, 0.95);
+        }
+
+        .checker-card h3 {
+            margin-bottom: 1.5rem;
+            color: var(--dark-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: var(--transition);
+        }
+
+        .checker-card:hover h3 {
+            color: var(--primary-color);
+        }
+
+        .checker-card h3 i {
+            color: var(--primary-color);
+            transition: var(--transition);
+        }
+
+        .checker-card:hover h3 i {
+            transform: scale(1.1);
+        }
+
+        .input-group {
+            display: flex;
+            margin-bottom: 1.5rem;
+        }
+
+        .input-group input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius) 0 0 var(--border-radius);
+            font-size: 1rem;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .input-group input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(255, 140, 0, 0.2);
+        }
+
+        .input-group input:hover {
+            border-color: #bbb;
+        }
+
+        .input-group button {
+            background: linear-gradient(135deg, #1a73e8, #0d47a1);
+            color: white;
+            border: none;
+            padding: 0 20px;
+            border-radius: 0 var(--border-radius) var(--border-radius) 0;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .input-group button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(26, 115, 232, 0.4);
+            background: linear-gradient(135deg, #2a7de1, #1565c0);
+        }
+
+        .input-group button::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: 0.5s;
+        }
+
+        .input-group button:hover::after {
+            left: 100%;
+        }
+
+        /* Result Card */
+        .result-card {
+            background-color: rgba(255, 255, 255, 0.85);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 2rem;
+            display: none;
+            transition: var(--transition);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .result-card.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .result-card:hover {
+            transform: translateY(-5px) scale(1.01);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+            background-color: rgba(255, 255, 255, 0.95);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 1rem;
+        }
+
+        .result-header i {
+            font-size: 1.5rem;
+            transition: var(--transition);
+        }
+
+        .result-card:hover .result-header i {
+            transform: scale(1.1);
+        }
+
+        .verified i {
+            color: var(--accent-color);
+        }
+
+        .fake i {
+            color: var(--danger-color);
+        }
+
+        .unknown i {
+            color: var(--warning-color);
+        }
+
+        .result-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+
+        .result-card:hover .result-title {
+            transform: translateX(5px);
+        }
+
+        .confidence-meter {
+            margin: 1.5rem 0;
+        }
+
+        .confidence-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .confidence-bar {
+            height: 8px;
+            background-color: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            transition: var(--transition);
+        }
+
+        .result-card:hover .confidence-bar {
+            transform: scaleY(1.2);
+        }
+
+        .confidence-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .verified .confidence-fill {
+            background-color: var(--accent-color);
+        }
+
+        .fake .confidence-fill {
+            background-color: var(--danger-color);
+        }
+
+        .unknown .confidence-fill {
+            background-color: var(--warning-color);
+        }
+
+        .result-details {
+            margin-top: 1.5rem;
+            transition: var(--transition);
+        }
+
+        .result-card:hover .result-details {
+            transform: translateY(5px);
+        }
+
+        .result-details h4 {
+            margin-bottom: 10px;
+            color: var(--dark-color);
+        }
+
+        .result-details p {
+            color: var(--gray-color);
+            line-height: 1.5;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .info-card {
+            background-color: rgba(255, 255, 255, 0.85);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 1.5rem;
+            transition: var(--transition);
+            opacity: 0;
+            transform: translateY(20px);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .info-card.animate {
+            animation: fadeInUp 0.8s ease forwards;
+        }
+
+        .info-card:hover {
+            transform: translateY(-5px) scale(1.01);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+            background-color: rgba(255, 255, 255, 0.95);
+        }
+
+        .info-card h3 {
+            margin-bottom: 1rem;
+            color: var(--dark-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: var(--transition);
+        }
+
+        .info-card:hover h3 {
+            color: var(--primary-color);
+        }
+
+        .info-card h3 i {
+            color: var(--primary-color);
+            transition: var(--transition);
+        }
+
+        .info-card:hover h3 i {
+            transform: scale(1.1);
+        }
+
+        .info-card p {
+            color: var(--gray-color);
+            margin-bottom: 1rem;
+            transition: var(--transition);
+        }
+
+        .info-card:hover p {
+            transform: translateY(2px);
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 1rem;
+        }
+
+        .stat {
+            text-align: center;
+            transition: var(--transition);
+        }
+
+        .info-card:hover .stat {
+            transform: scale(1.05);
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            transition: var(--transition);
+        }
+
+        .info-card:hover .stat-value {
+            color: var(--secondary-color);
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--gray-color);
+        }
+
+        /* Chart Container */
+        .chart-container {
+            height: 200px;
+            margin-top: 1rem;
+            position: relative;
+        }
+
+        /* Footer */
+        footer {
+            background-color: var(--dark-color);
+            color: white;
+            padding: 2rem 0;
+            margin-top: 3rem;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2rem;
+        }
+
+        @media (max-width: 992px) {
+            .footer-content {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 576px) {
+            .footer-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .footer-section {
+            transition: var(--transition);
+        }
+
+        .footer-section:hover {
+            transform: translateY(-5px);
+        }
+
+        .footer-section h3 {
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: var(--transition);
+        }
+
+        .footer-section:hover h3 {
+            color: var(--primary-color);
+        }
+
+        .footer-section h3 i {
+            color: var(--primary-color);
+            transition: var(--transition);
+        }
+
+        .footer-section:hover h3 i {
+            transform: scale(1.1);
+        }
+
+        .footer-section p {
+            color: #b0b0b0;
+            margin-bottom: 1rem;
+            transition: var(--transition);
+        }
+
+        .footer-section:hover p {
+            transform: translateY(2px);
+        }
+
+        .footer-links {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 10px;
+            transition: var(--transition);
+        }
+
+        .footer-links li:hover {
+            transform: translateX(5px);
+        }
+
+        .footer-links a {
+            color: #b0b0b0;
+            text-decoration: none;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .footer-links a:hover {
+            color: white;
+        }
+
+        .footer-links a i {
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Team Section in Footer */
+        .team-section {
+            background-color: rgba(0, 0, 0, 0.3);
+            padding: 2rem 0;
+            margin-top: 1rem;
+        }
+
+        .team-section h3 {
+            margin-bottom: 1.5rem;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: center;
+            transition: var(--transition);
+        }
+
+        .team-section:hover h3 {
+            color: var(--primary-color);
+        }
+
+        .team-section h3 i {
+            color: var(--primary-color);
+            transition: var(--transition);
+        }
+
+        .team-section:hover h3 i {
+            transform: scale(1.1);
+        }
+
+        .team-members {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .team-member {
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            text-align: center;
+            transition: var(--transition);
+        }
+
+        .team-member:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-5px);
+        }
+
+        .member-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: white;
+            transition: var(--transition);
+        }
+
+        .team-member:hover .member-name {
+            color: var(--primary-color);
+        }
+
+        .member-id {
+            color: #b0b0b0;
+            font-size: 0.9rem;
+            transition: var(--transition);
+        }
+
+        .team-member:hover .member-id {
+            color: white;
+        }
+
+        .copyright {
+            text-align: center;
+            padding: 1.5rem 0;
+            border-top: 1px solid #444;
+            color: #b0b0b0;
+            font-size: 0.9rem;
+            transition: var(--transition);
+        }
+
+        .copyright:hover {
+            color: white;
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+            transition: var(--transition);
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+            transition: var(--transition);
+        }
+
+        .loading:hover .spinner {
+            border-left-color: var(--secondary-color);
+            transform: scale(1.1);
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .extension-link {
+            display: inline-block;
+            background: linear-gradient(135deg, #1a73e8, #0d47a1);
+            color: white;
+            padding: 10px 20px;
+            border-radius: var(--border-radius);
+            text-decoration: none;
+            font-weight: 500;
+            transition: var(--transition);
+            margin-top: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .extension-link:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 4px 12px rgba(26, 115, 232, 0.4);
+            background: linear-gradient(135deg, #2a7de1, #1565c0);
+        }
+
+        .extension-link::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: 0.5s;
+        }
+
+        .extension-link:hover::after {
+            left: 100%;
+        }
+
+        /* Recent Verifications Items */
+        .verification-item {
+            padding: 10px;
+            border-left: 3px solid var(--accent-color);
+            background-color: #f0f8f0;
+            margin-bottom: 10px;
+            transition: var(--transition);
+        }
+
+        .verification-item:hover {
+            transform: translateX(5px);
+            background-color: #e0f0e0;
+        }
+
+        .verification-item.false {
+            border-left-color: var(--danger-color);
+            background-color: #fef0f0;
+        }
+
+        .verification-item.false:hover {
+            background-color: #fee0e0;
+        }
+
+        .verification-item.unverified {
+            border-left-color: var(--warning-color);
+            background-color: #fff8e1;
+        }
+
+        .verification-item.unverified:hover {
+            background-color: #fff0c0;
+        }
+
+        /* Page Sections */
+        .page-section {
+            display: none;
+            padding: 2rem 0;
+        }
+
+        .page-section.active {
+            display: block;
+        }
+
+        /* Tab Navigation */
+        .tab-navigation {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            padding: 10px 20px;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, #1a73e8, #0d47a1);
+            color: white;
+            border-color: #1a73e8;
+        }
+
+        .tab-btn:hover:not(.active) {
+            background-color: #f0f0f0;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        /* Developers Section */
+        .developers-section {
+            font-weight: 1000;
+            padding: 2.5rem 0;
+            margin-top: 2rem;
+        }
+
+        .developers-section h3 {
+            margin-bottom: 1rem;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: center;
+            transition: var(--transition);
+        }
+
+        .developers-section:hover h3 {
+            color: var(--primary-color);
+        }
+
+        .developers-section h3 i {
+            color: var(--primary-color);
+            transition: var(--transition);
+        }
+
+        .developers-section:hover h3 i {
+            transform: scale(1.1);
+        }
+
+        .developers-list {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 50px;
+            margin-top: 1rem;
+        }
+
+        .developer {
+            color: #b0b0b0;
+            font-size: 0.9rem;
+            transition: var(--transition);
+        }
+
+        .developer:hover {
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Small Charts for How It Works */
+        .small-chart-container {
+            height: 150px;
+            margin-top: 1rem;
+            position: relative;
+        }
+
+        /* Content Layout */
+        .content {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            nav ul {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .hero {
+                padding: 6rem 0 2rem;
+            }
+
+            .hero h2 {
+                font-size: 2rem;
+            }
+
+            .hero p {
+                font-size: 1rem;
+            }
+
+            .input-group {
+                flex-direction: column;
+            }
+
+            .input-group input {
+                border-radius: var(--border-radius);
+                margin-bottom: 10px;
+            }
+
+            .input-group button {
+                border-radius: var(--border-radius);
+                padding: 12px;
+            }
+
+            .developers-list {
+                flex-direction: column;
+                align-items: center;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <img src="shield-48.png" alt="MisInfo Guard Logo" style="height: 60px;">
+                    <img src="shield-48-title.png" alt="MisInfo Guard title" style="height: 25px;">
+                </div>
+                <nav>
+                    <ul>
+                        <li><a href="#" class="active" data-page="home">Home</a></li>
+                        <li><a href="#" data-page="extension">Extension</a></li>
+                        <li><a href="#" data-page="how-it-works">How It Works</a></li>
+                        <li><a href="#" data-page="support">Support</a></li>
+                        <li><a href="#" data-page="feedback">Feedback</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Home Page -->
+    <div id="home-page" class="page-section active">
+        <div class="landing-text">
+            <h1>Welcome to <span class="gradient-text">MisInfo Guard</span></h1>
+        </div>
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="container">
+                <h2>Detect Misinformation in News Headlines</h2>
+                <p>Use our advanced AI-powered tool to verify the authenticity of news headlines and combat the spread of fake news.</p>
+            </div>
+        </section>
+
+        <!-- Main Content -->
+        <div class="container">
+            <div class="main-content">
+                <div class="content">
+                    <!-- Checker Card -->
+                    <div class="checker-card animate">
+                        <h3><i class="fas fa-search"></i> Check Headline</h3>
+                        <div class="input-group">
+                            <input type="text" id="headline-input" placeholder="Paste a news headline here...">
+                            <button id="check-btn">Check</button>
+                        </div>
+                        <p>Or use our <a href="#" data-page="extension">browser extension</a> to verify headlines directly from any webpage.</p>
+                    </div>
+
+                    <!-- Loading Animation -->
+                    <div class="loading" id="loading">
+                        <div class="spinner"></div>
+                        <p>Analyzing headline for misinformation...</p>
+                    </div>
+
+                    <!-- Result Card -->
+                    <div class="result-card" id="result-card">
+                        <div class="result-header">
+                            <i class="fas fa-check-circle" id="result-icon"></i>
+                            <div class="result-title" id="result-title">Verified</div>
+                        </div>
+                        <p id="result-text">This headline appears to be from a credible source.</p>
+                        
+                        <div class="confidence-meter">
+                            <div class="confidence-label">
+                                <span>Confidence</span>
+                                <span id="confidence-value">85%</span>
+                            </div>
+                            <div class="confidence-bar">
+                                <div class="confidence-fill" id="confidence-fill" style="width: 85%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="result-details">
+                            <h4>Analysis Details</h4>
+                            <p id="analysis-details">Our system has analyzed this headline against multiple trusted sources and found consistent reporting.</p>
+                        </div>
+                    </div>
+
+                    <!-- About Section -->
+                    <div class="checker-card animate">
+                        <h3><i class="fas fa-info-circle"></i> About MisInfo Guard</h3>
+                        <p>MisInfo Guard is a tool designed to combat the spread of misinformation online by providing quick and reliable verification of news headlines.</p>
+                        <p>Our system uses advanced machine learning algorithms to analyze headlines against thousands of trusted sources, providing you with confidence scores for each verification.</p>
+                    </div>
+
+                    <!-- Extension Section -->
+                    <div class="checker-card animate">
+                        <h3><i class="fas fa-puzzle-piece"></i> Browser Extension</h3>
+                        <p>Install our browser extension to verify headlines directly from any webpage with a simple right-click.</p>
+                        <p>The extension works by:</p>
+                        <ul style="margin-left: 20px; margin-bottom: 15px;">
+                            <li>Allowing you to select text on any webpage</li>
+                            <li>Right-clicking to access the verification feature</li>
+                            <li>Getting instant analysis without leaving the page</li>
+                        </ul>
+                            <p class="note">
+                                <b>To install:</b> Download the .xpi file → open <b>about:debugging</b> in Firefox → 
+                                click <b>“Load Temporary Add-on”</b> → choose the downloaded file.
+                            </p>
+                        <a href="https://github.com/Rosh264/Misinformation-Detector-AI/releases/download/v1.0/misinfo-guard-v1.0.xpi" class="extension-link" id="install-extension">
+                            <i class="fab fa-firefox-browser"></i> Install Firefox Extension
+                        </a>
+                    </div>
+
+                    <!-- Recent Verifications -->
+                    <div class="checker-card animate">
+                        <h3><i class="fas fa-bullhorn"></i> Recent Verifications</h3>
+                        <div style="margin-top: 10px;">
+                            <div class="verification-item">
+                                <strong>Verified:</strong> "New climate agreement signed by 15 countries"
+                            </div>
+                            <div class="verification-item false">
+                                <strong>False:</strong> "Celebrity claims aliens helped win election"
+                            </div>
+                            <div class="verification-item unverified">
+                                <strong>Unverified:</strong> "Breakthrough in cancer research announced"
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sidebar -->
+                <div class="sidebar">
+                    <div class="info-card animate">
+                        <h3><i class="fas fa-chart-bar"></i> Statistics</h3>
+                        <div class="stats">
+                            <div class="stat">
+                                <div class="stat-value">12,458</div>
+                                <div class="stat-label">Headlines Checked</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-value">87%</div>
+                                <div class="stat-label">Accuracy Rate</div>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="statsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Extension Page -->
+    <div id="extension-page" class="page-section">
+        <div class="container">
+            <div class="hero">
+                <h2><i class="fas fa-puzzle-piece"></i> Browser Extension</h2>
+                <p>Install our browser extension to verify headlines directly from any webpage</p>
+            </div>
+            
+            <div class="main-content">
+                <div class="content">
+                    <div class="checker-card animate">
+                        <h3><i class="fas fa-download"></i> Install Extension</h3>
+                        <p>Our browser extension allows you to verify news headlines directly from any webpage with a simple right-click.</p>
+                        
+                        <div style="display: flex; gap: 15px; margin: 20px 0; flex-wrap: wrap;">
+                            <a href="#" class="extension-link">
+                                <i class="fab fa-firefox-browser"></i> Firefox
+                            </a>
+                            <a href="#" class="extension-link">
+                                <i class="fab fa-chrome"></i> Chrome
+                            </a>
+                            <a href="#" class="extension-link">
+                                <i class="fab fa-edge"></i> Edge
+                            </a>
+                        </div>
+                        
+                        <h4>How to use the extension:</h4>
+                        <ol style="margin-left: 20px; margin-top: 15px;">
+                            <li>Select text on any webpage</li>
+                            <li>Right-click and choose "Verify with MisInfo Guard"</li>
+                            <li>View the verification results in the popup</li>
+                        </ol>
+                    </div>
+                    
+                    <div class="checker-card animate">
+                        <h3><i class="fas fa-star"></i> Extension Features</h3>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; margin-top: 20px;">
+                            <div>
+                                <h4><i class="fas fa-bolt" style="color: var(--primary-color);"></i> Instant Analysis</h4>
+                                <p>Get immediate verification without leaving the page</p>
+                            </div>
+                            <div>
+                                <h4><i class="fas fa-history" style="color: var(--primary-color);"></i> History Tracking</h4>
+                                <p>Keep track of your previous verifications</p>
+                            </div>
+                            <div>
+                                <h4><i class="fas fa-share-alt" style="color: var(--primary-color);"></i> Share Results</h4>
+                                <p>Easily share verification results with others</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="sidebar">
+                    <div class="info-card animate">
+                        <h3><i class="fas fa-question-circle"></i> Need Help?</h3>
+                        <p>If you encounter any issues with the extension, check our troubleshooting guide or contact our support team.</p>
+                        <a href="#" class="extension-link" data-page="support">Get Support</a>
+                    </div>
+                    
+                    <div class="info-card animate">
+                        <h3><i class="fas fa-code-branch"></i> Version Info</h3>
+                        <p><strong>Current Version:</strong> 2.1.0</p>
+                        <p><strong>Last Updated:</strong> October 15, 2023</p>
+                        <p><strong>Compatibility:</strong> Firefox 78+, Chrome 88+</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- How It Works Page -->
+    <div id="how-it-works-page" class="page-section">
+        <div class="container">
+            <div class="hero">
+                <h2><i class="fas fa-cogs"></i> How It Works</h2>
+                <p>Learn about our advanced technology and methodology</p>
+            </div>
+            
+            <div class="main-content">
+                <div class="content">
+                    <div class="checker-card animate">
+                        <h3><i class="fas fa-brain"></i> AI-Powered Analysis</h3>
+                        <p>Our system uses state-of-the-art machine learning algorithms to analyze news headlines and compare them against verified information sources.</p>
+                        
+                        <div class="tab-navigation">
+                            <div class="tab-btn active" data-tab="data-collection">Data Collection</div>
+                            <div class="tab-btn" data-tab="pattern-analysis">Pattern Analysis</div>
+                            <div class="tab-btn" data-tab="verification">Verification</div>
+                            <div class="tab-btn" data-tab="scoring">Confidence Scoring</div>
+                        </div>
+                        
+                        <div class="tab-content active" id="data-collection">
+                            <h4>Data Collection Process</h4>
+                            <p>We gather data from thousands of trusted news sources and fact-checking organizations worldwide. Our database is continuously updated with the latest information.</p>
+                            <div class="small-chart-container">
+                                <canvas id="dataChart"></canvas>
+                            </div>
+                        </div>
+                        
+                        <div class="tab-content" id="pattern-analysis">
+                            <h4>Pattern Analysis</h4>
+                            <p>Our machine learning models analyze linguistic patterns, source credibility, and cross-reference information to detect potential misinformation.</p>
+                            <div class="small-chart-container">
+                                <canvas id="patternChart"></canvas>
+                            </div>
+                        </div>
+                        
+                        <div class="tab-content" id="verification">
+                            <h4>Verification Process</h4>
+                            <p>We compare headlines against multiple trusted sources and use advanced algorithms to determine the likelihood of misinformation.</p>
+                            <div class="small-chart-container">
+                                <canvas id="verificationChart"></canvas>
+                            </div>
+                        </div>
+                        
+                        <div class="tab-content" id="scoring">
+                            <h4>Confidence Scoring</h4>
+                            <p>Each verification result comes with a confidence score that indicates how certain our system is about the classification.</p>
+                            <div class="small-chart-container">
+                                <canvas id="scoringChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="sidebar">
+                    <div class="info-card animate">
+                        <h3><i class="fas fa-shield-alt"></i> Our Accuracy</h3>
+                        <p>MisInfo Guard has been tested against thousands of verified news sources and achieves an accuracy rate of over 87% in detecting misinformation.</p>
+                    </div>
+                    
+                    <div class="info-card animate">
+                        <h3><i class="fas fa-clock"></i> Response Time</h3>
+                        <p>Our system typically provides verification results in under 2 seconds, allowing for quick fact-checking while browsing.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Support Page -->
+    <div id="support-page" class="page-section">
+        <div class="container">
+            <div class="hero">
+                <h2><i class="fas fa-headset"></i> Support</h2>
+                <p>Get help with MisInfo Guard and our browser extension</p>
+            </div>
+            
+            <div class="main-content">
+                <div class="content">
+                    <div class="checker-card animate">
+                        <h3><i class="fas fa-question-circle"></i> Frequently Asked Questions</h3>
+                        
+                        <div style="margin-top: 20px;">
+                            <h4>How accurate is MisInfo Guard?</h4>
+                            <p>Our system currently achieves an accuracy rate of 87% based on testing with verified datasets. We're continuously working to improve this through regular updates to our algorithms and data sources.</p>
+                            
+                            <h4>Is my data stored when I use the service?</h4>
+                            <p>We prioritize user privacy. Headlines submitted for verification are processed anonymously and are not permanently stored with any personally identifiable information.</p>
+                            
+                            <h4>Can I suggest new features?</h4>
+                            <p>Absolutely! We welcome feedback and feature suggestions. Please use our <a href="#" data-page="feedback">feedback form</a> to share your ideas.</p>
+                            
+                            <h4>How often is your database updated?</h4>
+                            <p>Our verification database is updated in real-time as new information becomes available from our trusted sources.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="checker-card animate">
+                        <h3><i class="fas fa-envelope"></i> Contact Support</h3>
+                        <p>If you can't find the answer to your question in our FAQ, please contact our support team.</p>
+                        
+                        <form style="margin-top: 20px;">
+                            <div style="margin-bottom: 15px;">
+                                <label for="name" style="display: block; margin-bottom: 5px;">Name</label>
+                                <input type="text" id="name" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: var(--border-radius);">
+                            </div>
+                            
+                            <div style="margin-bottom: 15px;">
+                                <label for="email" style="display: block; margin-bottom: 5px;">Email</label>
+                                <input type="email" id="email" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: var(--border-radius);">
+                            </div>
+                            
+                            <div style="margin-bottom: 15px;">
+                                <label for="message" style="display: block; margin-bottom: 5px;">Message</label>
+                                <textarea id="message" rows="5" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: var(--border-radius);"></textarea>
+                            </div>
+                            
+                            <button type="submit" class="extension-link" style="border: none; cursor: pointer;">Send Message</button>
+                        </form>
+                    </div>
+                </div>
+                
+                <div class="sidebar">
+                    <div class="info-card animate">
+                        <h3><i class="fas fa-book"></i> Documentation</h3>
+                        <p>Check out our detailed documentation for technical information about our API and integration options.</p>
+                        <a href="#" class="extension-link">View Documentation</a>
+                    </div>
+                    
+                    <div class="info-card animate">
+                        <h3><i class="fas fa-bug"></i> Report a Bug</h3>
+                        <p>Found an issue with our service? Let us know so we can fix it.</p>
+                        <a href="#" class="extension-link">Report Bug</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feedback Page -->
+    <div id="feedback-page" class="page-section">
+        <div class="container">
+            <div class="hero">
+                <h2><i class="fas fa-comment-dots"></i> Feedback</h2>
+                <p>Help us improve MisInfo Guard by sharing your thoughts</p>
+            </div>
+            
+            <div class="main-content">
+                <div class="content">
+                    <div class="checker-card animate">
+                        <h3><i class="fas fa-lightbulb"></i> Share Your Feedback</h3>
+                        <p>We value your input! Please share your suggestions, feature requests, or general feedback about MisInfo Guard.</p>
+                        
+                        <form style="margin-top: 20px;">
+                            <div style="margin-bottom: 15px;">
+                                <label for="feedback-type" style="display: block; margin-bottom: 5px;">Feedback Type</label>
+                                <select id="feedback-type" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: var(--border-radius);">
+                                    <option value="suggestion">Suggestion</option>
+                                    <option value="bug">Bug Report</option>
+                                    <option value="feature">Feature Request</option>
+                                    <option value="general">General Feedback</option>
+                                </select>
+                            </div>
+                            
+                            <div style="margin-bottom: 15px;">
+                                <label for="feedback-message" style="display: block; margin-bottom: 5px;">Your Feedback</label>
+                                <textarea id="feedback-message" rows="5" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: var(--border-radius);"></textarea>
+                            </div>
+                            
+                            <button type="submit" class="extension-link" style="border: none; cursor: pointer;">Submit Feedback</button>
+                        </form>
+                    </div>
+                    
+                    <div class="checker-card animate">
+                        <h3><i class="fas fa-vote-yea"></i> Feature Voting</h3>
+                        <p>Vote on which features you'd like to see implemented in future updates.</p>
+                        
+                        <div style="margin-top: 20px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee;">
+                                <span>Mobile App Version</span>
+                                <button class="extension-link" style="border: none; cursor: pointer; padding: 5px 10px; font-size: 0.9rem;">Vote (42)</button>
+                            </div>
+                            
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee;">
+                                <span>Additional Language Support</span>
+                                <button class="extension-link" style="border: none; cursor: pointer; padding: 5px 10px; font-size: 0.9rem;">Vote (38)</button>
+                            </div>
+                            
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee;">
+                                <span>Browser Extension for Safari</span>
+                                <button class="extension-link" style="border: none; cursor: pointer; padding: 5px 10px; font-size: 0.9rem;">Vote (25)</button>
+                            </div>
+                            
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0;">
+                                <span>API Access for Developers</span>
+                                <button class="extension-link" style="border: none; cursor: pointer; padding: 5px 10px; font-size: 0.9rem;">Vote (19)</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="sidebar">
+                    <div class="info-card animate">
+                        <h3><i class="fas fa-road"></i> Roadmap</h3>
+                        <p>Check out our development roadmap to see what features we're planning to implement in the future.</p>
+                        <a href="#" class="extension-link">View Roadmap</a>
+                    </div>
+                    
+                    <div class="info-card animate">
+                        <h3><i class="fas fa-users"></i> Community</h3>
+                        <p>Join our community forum to discuss MisInfo Guard with other users and our development team.</p>
+                        <a href="#" class="extension-link">Join Community</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3><i class="fas fa-shield-alt"></i> MisInfo Guard</h3>
+                    <p>Combat misinformation with our AI-powered verification tool.</p>
+                    <p>Available as a web service and browser extension.</p>
+                </div>
+                
+                <div class="footer-section">
+                    <h3><i class="fas fa-link"></i> Quick Links</h3>
+                    <ul class="footer-links">
+                        <li><a href="#" data-page="home"><i class="fas fa-home"></i> Home</a></li>
+                        <li><a href="#" data-page="extension"><i class="fas fa-puzzle-piece"></i> Extension</a></li>
+                        <li><a href="#" data-page="how-it-works"><i class="fas fa-cogs"></i> How It Works</a></li>
+                        <li><a href="#" data-page="support"><i class="fas fa-headset"></i> Support</a></li>
+                        <li><a href="#" data-page="feedback"><i class="fas fa-comment-dots"></i> Feedback</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3><i class="fas fa-info-circle"></i> Resources</h3>
+                    <ul class="footer-links">
+                        <li><a href="#"><i class="fas fa-book"></i> Documentation</a></li>
+                        <li><a href="#"><i class="fas fa-blog"></i> Blog</a></li>
+                        <li><a href="#"><i class="fas fa-database"></i> API</a></li>
+                        <li><a href="#"><i class="fas fa-file-alt"></i> Privacy Policy</a></li>
+                        <li><a href="#"><i class="fas fa-gavel"></i> Terms of Service</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3><i class="fas fa-envelope"></i> Contact Us</h3>
+                    <ul class="footer-links">
+                        <li><a href="#"><i class="fas fa-envelope"></i> support@misinfoguard.com</a></li>
+                        <li><a href="#"><i class="fas fa-phone"></i>+91 7975780239</a></li>
+                        <li><a href="#"><i class="fab fa-twitter"></i> Twitter</a></li>
+                        <li><a href="#"><i class="fab fa-github"></i> GitHub</a></li>
+                        <li><a href="#"><i class="fab fa-linkedin"></i> LinkedIn</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Developers Section -->
+            <div class="developers-section">
+                <h3><i class="fas fa-code"></i> Developers</h3>
+                <div class="developers-list">
+                    <div class="developer">ROSHAN SHARMA  (23BTRE136)</div>
+                    <div class="developer">RAJINI C (23BTRE134)</div>
+                    <div class="developer">RAKESH N (23BTRE135)</div>
+                    <div class="developer">RAHUL R  (23BTRE132)</div>
+                    <div class="developer">RAJENDRA PRASAD V  (23BTRE133 )</div>
+                </div>
+            </div>
+            
+            <div class="copyright">
+                &copy; 2025 MisInfo Guard. All rights reserved.
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Page Navigation
+        document.querySelectorAll('nav a, .footer-links a, .extension-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                if (this.getAttribute('data-page')) {
+                    e.preventDefault();
+                    const pageId = this.getAttribute('data-page');
+                    
+                    // Update active nav link
+                    document.querySelectorAll('nav a').forEach(navLink => {
+                        navLink.classList.remove('active');
+                    });
+                    this.classList.add('active');
+                    
+                    // Show selected page
+                    document.querySelectorAll('.page-section').forEach(section => {
+                        section.classList.remove('active');
+                    });
+                    document.getElementById(`${pageId}-page`).classList.add('active');
+                    
+                    // Scroll to top
+                    window.scrollTo(0, 0);
+                }
+            });
+        });
+
+        // Tab Navigation for How It Works
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const tabId = this.getAttribute('data-tab');
+                
+                // Update active tab button
+                document.querySelectorAll('.tab-btn').forEach(tabBtn => {
+                    tabBtn.classList.remove('active');
+                });
+                this.classList.add('active');
+                
+                // Show selected tab content
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+
+        // Check Button Functionality
+        document.getElementById('check-btn').addEventListener('click', function() {
+            const headlineInput = document.getElementById('headline-input');
+            const loading = document.getElementById('loading');
+            const resultCard = document.getElementById('result-card');
+            
+            if (headlineInput.value.trim() === '') {
+                alert('Please enter a headline to check.');
+                return;
+            }
+            
+            // Show loading animation
+            loading.classList.add('active');
+            resultCard.classList.remove('active');
+            
+            // Simulate API call with timeout
+            setTimeout(() => {
+                loading.classList.remove('active');
+                
+                // Random result for demo
+                const results = [
+                    { type: 'verified', title: 'Verified', text: 'This headline appears to be from a credible source.', confidence: 85, details: 'Our system has analyzed this headline against multiple trusted sources and found consistent reporting.' },
+                    { type: 'fake', title: 'Likely False', text: 'This headline contains elements of misinformation.', confidence: 72, details: 'Our analysis found inconsistencies with verified sources and potential misleading elements.' },
+                    { type: 'unknown', title: 'Unverified', text: 'We could not verify this headline with sufficient confidence.', confidence: 45, details: 'Limited information available from trusted sources. Exercise caution with this content.' }
+                ];
+                
+                const randomResult = results[Math.floor(Math.random() * results.length)];
+                
+                // Update result card
+                document.getElementById('result-icon').className = 
+                    randomResult.type === 'verified' ? 'fas fa-check-circle' : 
+                    randomResult.type === 'fake' ? 'fas fa-times-circle' : 
+                    'fas fa-question-circle';
+                
+                document.getElementById('result-title').textContent = randomResult.title;
+                document.getElementById('result-text').textContent = randomResult.text;
+                document.getElementById('confidence-value').textContent = `${randomResult.confidence}%`;
+                document.getElementById('confidence-fill').style.width = `${randomResult.confidence}%`;
+                document.getElementById('analysis-details').textContent = randomResult.details;
+                
+                // Update card class
+                resultCard.className = 'result-card active';
+                resultCard.classList.add(randomResult.type);
+                
+                // Add to recent verifications
+                const recentVerifications = document.querySelector('.verification-item:last-child');
+                const newVerification = recentVerifications.cloneNode(true);
+                newVerification.querySelector('strong').textContent = randomResult.title + ':';
+                newVerification.textContent = randomResult.title + ': ' + headlineInput.value.substring(0, 50) + '...';
+                newVerification.className = `verification-item ${randomResult.type}`;
+                document.querySelector('.verification-item:last-child').parentNode.insertBefore(newVerification, document.querySelector('.verification-item:last-child'));
+            }, 2000);
+        });
+
+        // Initialize Charts
+        window.onload = function() {
+            // Stats Chart
+            const statsCtx = document.getElementById('statsChart').getContext('2d');
+            const statsChart = new Chart(statsCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Verified', 'False', 'Unverified'],
+                    datasets: [{
+                        data: [65, 20, 15],
+                        backgroundColor: [
+                            'rgba(52, 168, 83, 0.7)',
+                            'rgba(234, 67, 53, 0.7)',
+                            'rgba(249, 171, 0, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgba(52, 168, 83, 1)',
+                            'rgba(234, 67, 53, 1)',
+                            'rgba(249, 171, 0, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+
+            // Data Collection Chart
+            const dataCtx = document.getElementById('dataChart').getContext('2d');
+            const dataChart = new Chart(dataCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Trusted Sources', 'Fact-Checkers', 'Government Data', 'Academic Research'],
+                    datasets: [{
+                        label: 'Data Sources',
+                        data: [85, 75, 60, 45],
+                        backgroundColor: 'rgba(255, 140, 0, 0.7)',
+                        borderColor: 'rgba(255, 140, 0, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+
+            // Pattern Analysis Chart
+            const patternCtx = document.getElementById('patternChart').getContext('2d');
+            const patternChart = new Chart(patternCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    datasets: [{
+                        label: 'Accuracy Improvement',
+                        data: [72, 75, 78, 80, 83, 87],
+                        backgroundColor: 'rgba(26, 115, 232, 0.2)',
+                        borderColor: 'rgba(26, 115, 232, 1)',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    }
+                }
+            });
+
+            // Verification Chart
+            const verificationCtx = document.getElementById('verificationChart').getContext('2d');
+            const verificationChart = new Chart(verificationCtx, {
+                type: 'radar',
+                data: {
+                    labels: ['Source Credibility', 'Content Analysis', 'Cross-Reference', 'Pattern Detection', 'Linguistic Analysis'],
+                    datasets: [{
+                        label: 'Verification Factors',
+                        data: [85, 78, 90, 82, 75],
+                        backgroundColor: 'rgba(52, 168, 83, 0.2)',
+                        borderColor: 'rgba(52, 168, 83, 1)',
+                        borderWidth: 2,
+                        pointBackgroundColor: 'rgba(52, 168, 83, 1)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    }
+                }
+            });
+
+            // Scoring Chart
+            const scoringCtx = document.getElementById('scoringChart').getContext('2d');
+            const scoringChart = new Chart(scoringCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['High Confidence', 'Medium Confidence', 'Low Confidence'],
+                    datasets: [{
+                        data: [65, 25, 10],
+                        backgroundColor: [
+                            'rgba(52, 168, 83, 0.7)',
+                            'rgba(249, 171, 0, 0.7)',
+                            'rgba(234, 67, 53, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgba(52, 168, 83, 1)',
+                            'rgba(249, 171, 0, 1)',
+                            'rgba(234, 67, 53, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+
+            // Add animation to cards on scroll
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('animate');
+                    }
+                });
+            }, observerOptions);
+
+            document.querySelectorAll('.checker-card, .info-card').forEach(card => {
+                observer.observe(card);
+            });
+        };
+    </script>
+</body>
+</html>
